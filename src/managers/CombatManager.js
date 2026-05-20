@@ -5,6 +5,11 @@ export class CombatManager {
     }
 
     performRangedAttack(attacker, defender) {
+
+        this.scene.combatVFX.playBulletShot(
+            attacker,
+            defender
+        );
         const baseAcc = attacker.accuracy - (defender.defense * 0.5);
         const hitChance = Phaser.Math.Clamp(baseAcc, 10, 95);
         if (Math.random() * 100 < hitChance) {
@@ -18,6 +23,10 @@ export class CombatManager {
     }
 
     performSniperShot(attacker, defender) {
+        this.scene.combatVFX.playSniperShot(
+            attacker,
+            defender
+        );
         const baseAcc = attacker.accuracy + 15 - (defender.defense * 0.5);
         if (Math.random() * 100 < Phaser.Math.Clamp(baseAcc, 20, 99)) {
             const dmg = Math.max(2, attacker.attack - Math.floor(defender.defense * 0.2));
@@ -30,6 +39,10 @@ export class CombatManager {
     }
 
     performMeleeAttack(attacker, defender) {
+        this.scene.combatVFX.playMeleeHit(
+            attacker,
+            defender
+        );
         const dmg = Math.floor(attacker.attack * 1.5) - Math.floor(defender.defense * 0.3);
         const finalDmg = Math.max(2, dmg);
         defender.hp -= finalDmg;

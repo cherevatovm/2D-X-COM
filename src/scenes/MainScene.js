@@ -10,6 +10,7 @@ import { TurnManager } from '../managers/TurnManager.js';
 import { UIManager } from '../managers/UIManager.js';
 import tileset from '../assets/tileset.png';
 import { FogOfWar } from '../vfx/FogOfWar.js';
+import { CombatVFX } from '../vfx/CombatVFX.js';
 
 export class MainScene extends Phaser.Scene {
     constructor() {
@@ -30,6 +31,7 @@ export class MainScene extends Phaser.Scene {
 
         this.unitManager = new UnitManager(this);
         this.combatManager = new CombatManager(this, this.unitManager);
+        this.combatVFX = new CombatVFX(this);
         this.movementManager = new MovementManager(this);
         this.targetManager = new TargetSelectionManager(this);
         this.turnManager = new TurnManager(this);
@@ -38,15 +40,15 @@ export class MainScene extends Phaser.Scene {
         this.unitManager.createUnits(this.tilemap);
         this.createUI();
 
-        // Initialize fog of war
-        this.fogOfWar = new FogOfWar(this, this.tilemap, { visionRange: 7 });
-        this.fogOfWar.render();   // places fog sprites over tiles
 
-        // Initial visibility update
-        const playerUnits = this.allUnits.filter(u => u.type === 'player');
-        this.fogOfWar.update(playerUnits, this.allUnits, this.selectedUnit);
+        this.fogOfWar = new FogOfWar(this, this.tilemap, { visionRange: 7 });
+        this.fogOfWar.render();
+
+
+        const playerUnits = this.unitManager.allUnits.filter(u => u.type === 'player');
+        this.fogOfWar.update(playerUnits, this.unitManager.allUnits, this.selectedUnit);
         
-        // init units
+
         this.unitManager.playerUnits.forEach(u => u.resetActions());
         this.uiManager.updateHelpText();
     }
@@ -92,15 +94,10 @@ export class MainScene extends Phaser.Scene {
         this.selectedUnit = unit;
         unit.select();
         this.infoPanel.update(unit);
-        this.updateFogOfWar();
+        this.updateMovementDisplay(unit);
     }
 
-    updateFogOfWar() {
-        if (this.fogOfWar) {
-            const playerUnits = this.allUnits.filter(u => u.type === 'player');
-            this.fogOfWar.update(playerUnits, this.allUnits, this.selectedUnit);
-        }
-
+    updateMovementDisplay(unit) {
         if (unit.type === 'player' && unit.hasActions()) {
             this.movementManager.showMoveRange(unit);
         } else {

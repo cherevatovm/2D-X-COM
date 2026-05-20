@@ -19,6 +19,11 @@ export class MovementManager {
 
     moveUnitTo(unit, targetTile) {
         this.clearHighlights();
+
+        if (this.scene.fogOfWar) {
+            this.scene.fogOfWar.hideFog();
+        }
+
         const pathfinder = this.scene.pathfinder;
         const tilemap = this.scene.tilemap;
         const path = pathfinder.findPath(unit.tile, targetTile, unit.moveRange);
@@ -34,6 +39,19 @@ export class MovementManager {
 
         unit.useAction(1);
         this.scene.infoPanel.update(unit);
+
+        if (this.scene.fogOfWar) {
+
+            const playerUnits =
+                this.scene.unitManager.allUnits.filter(
+                    u => u.type === 'player'
+                );
+
+            this.scene.fogOfWar.update(
+                playerUnits,
+                this.scene.unitManager.allUnits
+            );
+        }
 
         if (unit.actionsLeft > 0) {
             this.showMoveRange(unit);
