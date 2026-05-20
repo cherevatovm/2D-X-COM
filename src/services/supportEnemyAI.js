@@ -1,3 +1,6 @@
+/** 
+ * Типы всех бонусов для врагов
+ */
 const BUFF_TYPES = {
     SPEED: 'speed',
     ATTACK: 'attack',
@@ -6,6 +9,9 @@ const BUFF_TYPES = {
 
 const clamp01 = (value) => Math.min(1, Math.max(0, value));
 
+/**
+ * Система принятия решений для поддерживающего врага (мага), который может накладывать баффы на союзников.
+ */
 export class SupportEnemyAI {
     constructor(blackboard, cfg = {}) {
         this.blackboard = blackboard;
