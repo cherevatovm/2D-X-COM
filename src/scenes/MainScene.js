@@ -30,18 +30,18 @@ export class MainScene extends Phaser.Scene {
         this.createMap();
         this.createTextures();
 
+        this.blackboard = new WorldBlackboard(this);
         this.unitManager = new UnitManager(this);
         this.combatManager = new CombatManager(this, this.unitManager);
         this.combatVFX = new CombatVFX(this);
         this.movementManager = new MovementManager(this);
         this.targetManager = new TargetSelectionManager(this);
-        this.turnManager = new TurnManager(this);
+        this.turnManager = new TurnManager(this, this.blackboard);
         this.uiManager = new UIManager(this);
 
         this.unitManager.createUnits(this.tilemap);
 
-        this.blackboard = new WorldBlackboard(this);
-        this.supportAI = new SupportEnemyAI(blackboard);
+        this.supportAI = new SupportEnemyAI(this.blackboard);
         
         this.createUI();
 
@@ -79,7 +79,7 @@ export class MainScene extends Phaser.Scene {
 
         // Маг
         g.clear();
-        g.fillStyle(0x22c55e);
+        g.fillStyle(0xf593af);
         g.fillCircle(20, 20, 20);
         g.generateTexture('enemy_support_unit', 40, 40);
 

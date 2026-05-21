@@ -16,7 +16,7 @@ export class Unit {
         this.extraTurnCharges = 0;
         this.tile = null;
         
-        const texture = config.type === 'player' ? 'player_unit' : 'enemy_unit';
+        const texture = config.textureKey ?? (config.type === 'player' ? 'player_unit' : 'enemy_unit');
         
         this.sprite = scene.add.sprite(x, y, texture).setDepth(5);
         this.marker = scene.add.circle(x, y - 30, 8, 0xffd700).setDepth(6);
@@ -29,6 +29,16 @@ export class Unit {
 
     get isAlive() {
         return this.hp > 0;
+    }
+
+    moveTo(tile) {
+        this.setTile(tile);
+        const { x, y } = this.scene.tilemap.gridToWorld(tile.gridX, tile.gridY);
+        this.sprite.setPosition(x, y);
+        this.marker.setPosition(x, y - 30);
+        this.nameLabel.setPosition(x, y - 45);
+        this.useAction(1);
+        this.scene.infoPanel.update(this);
     }
 
     setTile(tile) {

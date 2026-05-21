@@ -1,3 +1,4 @@
+import { MathUtils } from "../utils/MathUtils";
 
 /**
  * Сервис, который предоставляет интерфейс для доступа к информации о состоянии игрового мира.
@@ -7,16 +8,19 @@ export class WorldBlackboard {
         this.scene = scene;
     }
 
-    getUnits() {
-        return this.scene.allUnits ?? [];
+    getUnits(alive = true) {
+        const units = this.scene.unitManager.allUnits ?? [];
+        return alive ? units.filter(unit => this.isAlive(unit)) : units;
     }
 
-    getEnemyUnits() {
-        return this.getUnits().filter((unit) => unit.type === 'enemy' && this.isAlive(unit));
+    getEnemyUnits(alive = true) {
+        const units = this.scene.unitManager.enemyUnits ?? [];
+        return alive ? units.filter(unit => this.isAlive(unit)) : units;
     }
 
-    getPlayerUnits() {
-        return this.getUnits().filter((unit) => unit.type === 'player' && this.isAlive(unit));
+    getPlayerUnits(alive = true) {
+        const units = this.scene.unitManager.playerUnits ?? [];
+        return alive ? units.filter(unit => this.isAlive(unit)) : units;
     }
 
     isAlive(unit) {
@@ -24,19 +28,19 @@ export class WorldBlackboard {
     }
 
     getUnitTile(unit) {
-        if (!unit) 
+        if (!unit)
             return null;
 
-        if (unit.tile) 
+        if (unit.tile)
             return unit.tile;
 
         const grid = this.scene.tilemap?.grid;
-        if (!grid) 
+        if (!grid)
             return null;
 
         for (const row of grid) {
             for (const tile of row) {
-                if (tile.unit === unit) 
+                if (tile.unit === unit)
                     return tile;
             }
         }
@@ -59,37 +63,57 @@ export class WorldBlackboard {
 
     getMaxGridDistance() {
         const tilemap = this.scene.tilemap;
-        if (!tilemap) 
+        if (!tilemap)
             return 20;
 
         return (tilemap.COLS ?? 0) + (tilemap.ROWS ?? 0);
     }
 
-    distanceBetween(a, b) {
+    distanceBetweenUnits(a, b) {
         const posA = this.getUnitGridPosition(a);
         const posB = this.getUnitGridPosition(b);
 
-        if (!posA || !posB) 
+        if (!posA || !posB)
             return Infinity;
 
-        return Math.abs(posA.x - posB.x) + Math.abs(posA.y - posB.y);
+        return MathUtils.gridDistance(posA, posB);
+    }
+
+    distanceBetweenTiles(t1, t2) {
+        const pos1 = { x: t1.gridX, y: t1.gridY };
+        const pos2 = { x: t2.gridX, y: t2.gridY };
+
+        return MathUtils.gridDistance(pos1, pos2);
     }
 
     getClosestPlayer(unit) {
-        return this._getClosestUnit(this.getPlayerUnits(), unit);
+        return this.getClosestUnit(this.getPlayerUnits(), unit);
     }
 
     getClosestEnemy(unit) {
-        return this._getClosestUnit(this.getEnemyUnits(), unit);
+        return this.getClosestUnit(this.getEnemyUnits(), unit);
     }
 
-    _getClosestUnit(units, unit) {
+    getClosestTile(tiles, tile) {
+        let best = null;
+
+        for (const t of tiles) {
+            const distance = this.distanceBetweenTiles(tile, t);
+            if (!best || distance < best.distance) {
+                best = { tile: t, distance: distance };
+            }
+        }
+
+        return best;
+    }
+    
+    getClosestUnit(units, unit) {
         let best = null;
 
         for (const u of units) {
-            const distance = this.distanceBetween(unit, u);
+            const distance = this.distanceBetweenUnits(unit, u);
             if (!best || distance < best.distance) {
-                best = { unit: u, distance };
+                best = { unit: u, distance: distance };
             }
         }
 
@@ -99,15 +123,15 @@ export class WorldBlackboard {
     getAlliesInRange(unit, range) {
         let allies = unit.type === 'player' ? this.getPlayerUnits() : this.getEnemyUnits();
         allies = allies.filter((ally) => ally !== unit);
-        return allies.filter((ally) => this.distanceBetween(unit, ally) <= range);
+        return allies.filter((ally) => this.distanceBetweenUnits(unit, ally) <= range);
     }
 
     getUnitAtGrid(gx, gy) {
         const tile = this.scene.tilemap?.getTile(gx, gy);
-        if (tile?.unit) 
+        if (tile?.unit)
             return tile.unit;
 
-        return this.getUnits().find((unit) => {
+        return this.getUnits(false).find((unit) => {
             const pos = this.getUnitGridPosition(unit);
             return pos && pos.x === gx && pos.y === gy;
         }) ?? null;

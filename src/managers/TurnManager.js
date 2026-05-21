@@ -1,6 +1,7 @@
 export class TurnManager {
-    constructor(scene) {
+    constructor(scene, blackboard) {
         this.scene = scene;
+        this.blackboard = blackboard;
     }
 
     endUnitTurn(unit) {
@@ -64,17 +65,14 @@ export class TurnManager {
     }
 
     enemyAct(enemy) {
-        const players = this.scene.unitManager.playerUnits;
-        let closest = null, minDist = Infinity;
-        players.forEach(p => {
-            if (p.hp <= 0) return;
-            const d = this.gridDistance(enemy.tile, p.tile);
-            if (d < minDist) { minDist = d; closest = p; }
-        });
+        const closestData = this.blackboard.getClosestPlayer(enemy);
+
+        const closest = closestData.unit;
+        const distanceToClosest = closestData.distance;
         if (!closest) { enemy.endTurn(); this.processEnemyTurn(); return; }
 
         const combat = this.scene.combatManager;
-        if (minDist <= 1) {
+        if (distanceToClosest <= 1) {
             combat.performRangedAttack(enemy, closest);
             enemy.endTurn();
             this.scene.time.delayedCall(300, () => this.processEnemyTurn());
@@ -91,27 +89,15 @@ export class TurnManager {
             return;
         }
 
-        let bestTile = neighbours[0];
-        let bestDist = this.gridDistance(enemy.tile, bestTile);
-        for (const tile of neighbours) {
-            const d = this.gridDistance(enemy.tile, tile);
-            if (d < bestDist) {
-                bestDist = d;
-                bestTile = tile;
-            }
-        }
+        const bestTile = this.blackboard.getClosestTile(neighbours, enemy.tile).tile;
 
         const path = pathfinder.findPath(enemy.tile, bestTile, enemy.moveRange);
         if (path && path.length > 0) {
             const finalTile = path[path.length - 1];
-            enemy.tile.unit = null;
-            enemy.tile = finalTile;
-            finalTile.unit = enemy;
-            const { x, y } = tilemap.gridToWorld(finalTile.gridX, finalTile.gridY);
-            enemy.sprite.setPosition(x, y);
-            enemy.useAction(1);
+            
+            enemy.moveTo(finalTile);
 
-            if (enemy.hasActions() && this.gridDistance(enemy.tile, closest.tile) <= 1) {
+            if (enemy.hasActions() && this.blackboard.distanceBetweenTiles(enemy.tile, closest.tile) <= 1) {
                 combat.performRangedAttack(enemy, closest);
                 enemy.endTurn();
             }
@@ -119,9 +105,5 @@ export class TurnManager {
             enemy.endTurn();
         }
         this.scene.time.delayedCall(300, () => this.processEnemyTurn());
-    }
-
-    gridDistance(a, b) {
-        return Math.abs(a.gridX - b.gridX) + Math.abs(a.gridY - b.gridY);
     }
 }
