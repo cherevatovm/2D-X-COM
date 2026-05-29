@@ -8,25 +8,6 @@ export class WorldBlackboard {
         this.scene = scene;
     }
 
-    getUnits(alive = true) {
-        const units = this.scene.unitManager.allUnits ?? [];
-        return alive ? units.filter(unit => this.isAlive(unit)) : units;
-    }
-
-    getEnemyUnits(alive = true) {
-        const units = this.scene.unitManager.enemyUnits ?? [];
-        return alive ? units.filter(unit => this.isAlive(unit)) : units;
-    }
-
-    getPlayerUnits(alive = true) {
-        const units = this.scene.unitManager.playerUnits ?? [];
-        return alive ? units.filter(unit => this.isAlive(unit)) : units;
-    }
-
-    isAlive(unit) {
-        return unit && unit.hp > 0;
-    }
-
     getUnitTile(unit) {
         if (!unit)
             return null;
@@ -85,16 +66,7 @@ export class WorldBlackboard {
 
         return MathUtils.gridDistance(pos1, pos2);
     }
-
-    getClosestPlayer(unit) {
-        return this.getClosestUnit(this.getPlayerUnits(), unit);
-    }
-
-    getClosestEnemy(unit) {
-        return this.getClosestUnit(this.getEnemyUnits(), unit);
-    }
-
-
+    
     isEnemyUnitVisible(unit) {
         return this.scene.fogOfWar.isExplored(this.getUnitTile(unit));
     }
