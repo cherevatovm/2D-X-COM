@@ -34,15 +34,24 @@ export class SupportEnemyAI {
     getRankedCandidates(buffType, supportUnit) {
         const candidates = this.unitManager
             .getEnemyUnits()
-            .filter((unit) => unit !== supportUnit);
+            .filter((unit) => unit !== supportUnit)
+            .filter((unit) => this._canReceive(buffType, unit));
+
+        const getActionPlan = (unit) => {
+            const unitAI = this.aiOrchestrator.getAIForEnemy(unit);
+            if (!unitAI) {
+                return null;
+            }
+            const plan = unitAI.getActionsPlan(unit, unit.actionsLeft);
+            return plan;
+        };
 
         const scored = candidates
-            .filter((unit) => this._canReceive(buffType, unit))
             .map((unit) => {
                 const features = this._buildFeatures(unit, supportUnit);
                 return {
                     unit,
-                    score: this._scoreCandidate(buffType, unit, features),
+                    score: this._scoreCandidate(buffType, unit, getActionPlan(unit), features),
                     features,
                 };
             });
@@ -127,7 +136,11 @@ export class SupportEnemyAI {
     }
 
     // Нужно балансить и улучшать
-    _scoreCandidate(buffType, unit, features) {
+    _scoreCandidate(buffType, unit, actionPlan, features) {
+        
+        if (!actionPlan)
+            return 0;
+        
         const maxDistance = this._getMaxDistance();
         const distNorm = clamp01(features.distToPlayer / maxDistance + 0.2);
         const closeNorm = 1 - distNorm;
@@ -137,25 +150,15 @@ export class SupportEnemyAI {
         const allyNorm = clamp01(features.alliesNearby / 4);
         const roleBonus = this._roleBonus(buffType, unit.role);
 
-        const unitAI = this.aiOrchestrator.getAIForEnemy(unit);
-
-        if (!unitAI)
-            return -1;
-
-        const unitNextPlan = unitAI.getActionsPlan(unit, unit.actionsLeft);
-
-        if (!unitNextPlan)
-            return 0;
-
-        if (buffType === BUFF_TYPES.SPEED && this._isGoingToMove(unitNextPlan.actions)) {
+        if (buffType === BUFF_TYPES.SPEED && this._isGoingToMove(actionPlan.actions)) {
             return clamp01(0.5 * moveRangeDeficitNorm + 0.3 * damageNorm + 0.1 * distNorm + 0.1 * roleBonus);
         }
 
-        if (buffType === BUFF_TYPES.ATTACK && this._isGoingToAttack(unitNextPlan.actions)) {
+        if (buffType === BUFF_TYPES.ATTACK && this._isGoingToAttack(actionPlan.actions)) {
             return clamp01(0.5 * damageNorm + 0.35 * closeNorm + 0.15 * roleBonus);
         }
 
-        if (buffType === BUFF_TYPES.EXTRA_TURN && unitNextPlan.actions.length > 0) {
+        if (buffType === BUFF_TYPES.EXTRA_TURN && actionPlan.actions.length > 0) {
             return clamp01(
                 0.5 * damageNorm +
                 0.2 * closeNorm +
