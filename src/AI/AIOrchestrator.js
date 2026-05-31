@@ -20,9 +20,12 @@ export class AIOrchestrator {
         if (!chosenController)
             return false;
 
-        // Все действия противника применяем прям в process, окончание 
-        // хода и задержка будут обработаны извне
-        chosenController.process(enemy);
+        const enemyPlan = chosenController.getActionsPlan(enemy, enemy.actionsLeft);
+
+        if (!enemyPlan)
+            return true;
+
+        this._executeEnemyPlan(enemy, enemyPlan, this.scene, this.scene.combatManager);
 
         return true;
     }
@@ -39,5 +42,71 @@ export class AIOrchestrator {
         }
 
         return null;
+    }
+
+    _executeEnemyPlan(enemy, plan, scene, combat) {
+
+        let currentActionIndex = 0;
+
+        executeNext();
+
+        function executeNext() {
+
+            if (currentActionIndex >= plan.actions.length) {
+                return;
+            }
+
+            const action =
+                plan.actions[currentActionIndex];
+
+            currentActionIndex++;
+
+            switch (action.type) {
+
+                case 'move':
+
+                    scene.movementManager.moveUnitTo(
+                        enemy,
+                        action.tile
+                    );
+
+                    break;
+
+                case 'attack':
+
+                    combat.performMeleeAttack(
+                        enemy,
+                        action.target
+                    );
+
+                    break;
+
+                case 'rangedAttack':
+
+                    combat.performRangedAttack(
+                        enemy,
+                        action.target
+                    );
+
+                    break;
+
+                case 'buff':
+
+                    scene.supportAI.applyBestBuff(enemy);
+
+                    break;
+
+                case 'sniperShot':
+
+                    combat.performSniperShot(
+                        enemy, 
+                        action.target
+                    );
+
+                    break;
+            }
+
+            executeNext();
+        }
     }
 }

@@ -290,59 +290,6 @@ export class AlingAI {
         return bestPlan;
     }
 
-    process(enemy) {
-        const combat = this.scene.combatManager;
-
-        const bestPlan = this.getActionsPlan(enemy, enemy.actionsLeft);
-
-        if (bestPlan)
-            executePlan(bestPlan, this.scene);
-
-        function executePlan(plan, scene) {
-
-            let currentActionIndex = 0;
-
-            executeNext();
-
-            function executeNext() {
-
-                if (currentActionIndex >= plan.actions.length) {
-                    return;
-                }
-
-                const action =
-                    plan.actions[currentActionIndex];
-
-                currentActionIndex++;
-
-                switch (action.type) {
-
-                    case 'move':
-
-                        scene.movementManager.moveUnitTo(
-                            enemy,
-                            action.tile
-                        );
-
-                        executeNext();
-
-                        break;
-
-                    case 'attack':
-
-                        combat.performMeleeAttack(
-                            enemy,
-                            action.target
-                        );
-
-                        executeNext();
-
-                        break;
-                }
-            }
-        }
-    }
-
     _isVisibleToSwarm(tile, swarmUnits, self, player) {
 
         const allSwarm = [...swarmUnits, self];
