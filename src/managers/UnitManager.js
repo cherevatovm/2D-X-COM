@@ -11,7 +11,7 @@ export class UnitManager {
     createUnits(tilemapService) {
         const toXY = (tile) => tilemapService.gridToWorld(tile.gridX, tile.gridY);
         const playerTiles = tilemapService.getSpawnTiles('left', 3);
-        const enemyTiles = tilemapService.getSpawnTiles('right', 7);
+        const enemyTiles = tilemapService.getSpawnTiles('right', 8);
 
         const playerDefs = [
             { name: 'Медик', hp: 100, attack: 10, defense: 8, accuracy: 70, role: 'medic', moveRange: 3 },
@@ -26,6 +26,10 @@ export class UnitManager {
             { name: 'Вражеский снайпер', hp: 70, ap: 2, attack: 16, defense: 4, accuracy: 85, role: 'sniper', moveRange: 3 },
             { name: 'Толстяк', hp: 130, ap: 1, attack: 22, defense: 8, accuracy: 60, role: 'brute', moveRange: 2 },
             { name: 'Маг', hp: 80, ap: 2, attack: 8, defense: 4, accuracy: 70, role: 'support', textureKey: 'enemy_support_unit', moveRange: 3 },
+            { name: 'Призыватель', hp: 60, ap: 2, attack: 6, defense: 4, accuracy: 60, role: 'summoner', moveRange: 2, maxSummonedUnits: 3,
+                minionRoles: ['swarm'],
+                minionConfigs: [{ name: 'Алинг (миньон)', hp: 25, attack: 15, defense: 8, accuracy: 50, role: "swarm", moveRange: 4 }]
+            },
         ];
 
         playerDefs.forEach((def, i) => {
@@ -71,5 +75,6 @@ export class UnitManager {
         unit.sprite.setVisible(false);
         unit.marker.setVisible(false);
         unit.nameLabel.setVisible(false);
+        unit.onKilled();
     }
 }

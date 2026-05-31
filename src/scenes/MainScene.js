@@ -16,6 +16,7 @@ import { FogOfWar } from '../vfx/FogOfWar.js';
 import { CombatVFX } from '../vfx/CombatVFX.js';
 import { AIOrchestrator } from '../AI/AIOrchestrator.js';
 import { AudioManager } from '../managers/AudioManager.js';
+import { TILE_TYPES } from '../entities/Tile.js';
 
 export class MainScene extends Phaser.Scene {
     constructor() {
