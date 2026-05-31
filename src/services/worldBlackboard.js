@@ -62,6 +62,14 @@ export class WorldBlackboard {
         return this.scene.fogOfWar.isExplored(this.getUnitTile(unit));
     }
 
+    getClosestPlayerForTile(tile) {
+        return this.getClosestUnitForTile(this.scene.unitManager.getPlayerUnits(), tile);
+    }
+
+    getClosestEnemyForTile(tile) {
+        return this.getClosestUnitForTile(this.scene.unitManager.getEnemyUnits(), tile);
+    }
+
     getClosestPlayer(unit) {
         return this.getClosestUnit(this.scene.unitManager.getPlayerUnits(), unit);
     }
@@ -115,12 +123,12 @@ export class WorldBlackboard {
         return bestTile;
     }
 
-    getClosestUnit(units, unit) {
+    getClosestUnitForTile(units, tile) {
         let best = null;
         let distanceLimit = Infinity;
 
         for (const u of units) {
-            const distance = this.distanceBetweenUnits(unit, u, distanceLimit);
+            const distance = this.distanceBetweenTiles(tile, this.getUnitTile(u), distanceLimit);
             if (!best || distance < best.distance) {
                 best = { unit: u, distance: distance };
                 distanceLimit = distance;
@@ -128,6 +136,10 @@ export class WorldBlackboard {
         }
 
         return best;
+    }
+
+    getClosestUnit(units, unit) {
+        return this.getClosestUnitForTile(units, this.getUnitTile(unit));
     }
 
     getAlliesInRange(unit, range) {
