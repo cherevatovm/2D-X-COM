@@ -75,14 +75,15 @@ export class TurnManager {
     }
 
     enemyAct(enemy) {
-        this.scene.aiOrchestrator.processAIActions(enemy);
-        // Повторный ход
-        if (enemy.consumeExtraTurn()) {
-            this.scene.time.delayedCall(300, () => this.enemyAct(enemy));
-            return;
-        }
-        enemy.endTurn();
-        this.scene.time.delayedCall(300, () => this.processEnemyTurn());
+        this.scene.aiOrchestrator.processAIActions(enemy, () => {
+            // Повторный ход
+            if (enemy.consumeExtraTurn()) {
+                this.scene.time.delayedCall(300, () => this.enemyAct(enemy));
+                return;
+            }
+            enemy.endTurn();
+            this.scene.time.delayedCall(300, () => this.processEnemyTurn());
+        });
     }
 
     tickEnemyBuffs() {

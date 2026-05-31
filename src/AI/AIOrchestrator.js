@@ -13,19 +13,23 @@ export class AIOrchestrator {
         this.aiControllers = [new SupportAI(scene), new BruteAI(scene), new SniperAI(scene), new AlingAI(scene), new StupidAI(scene)];
     }
 
-    processAIActions(enemy) {
+    processAIActions(enemy, onComplete) {
 
         const chosenController = this.getAIForEnemy(enemy);
 
-        if (!chosenController)
+        if (!chosenController) {
+            onComplete();
             return false;
+        }
 
         const enemyPlan = chosenController.getActionsPlan(enemy, enemy.actionsLeft);
 
-        if (!enemyPlan)
+        if (!enemyPlan || enemyPlan.actions.length === 0) {
+            onComplete();
             return true;
+        }
 
-        this._executeEnemyPlan(enemy, enemyPlan, this.scene, this.scene.combatManager);
+        this._executeEnemyPlan(enemy, enemyPlan, this.scene, this.scene.combatManager, onComplete);
 
         return true;
     }
@@ -44,17 +48,13 @@ export class AIOrchestrator {
         return null;
     }
 
-    _executeEnemyPlan(enemy, plan, scene, combat) {
+    _executeEnemyPlan(enemy, plan, scene, combat, onComplete) {
 
         let currentActionIndex = 0;
 
         executeNext();
 
         function executeNext() {
-
-            if (currentActionIndex >= plan.actions.length) {
-                return;
-            }
 
             const action =
                 plan.actions[currentActionIndex];
@@ -106,7 +106,13 @@ export class AIOrchestrator {
                     break;
             }
 
-            executeNext();
+            if (currentActionIndex >= plan.actions.length) {
+                onComplete();
+                return;
+            }
+            else {
+                scene.time.delayedCall(300, () => executeNext());
+            }
         }
     }
 }
