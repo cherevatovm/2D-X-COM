@@ -1,6 +1,8 @@
 export class Unit {
     constructor(scene, x, y, config) {
         this.scene = scene;
+        this.x = x;
+        this.y = y;
         this.name = config.name;
         this.type = config.type;
         this.role = config.role ?? 'generic';
@@ -16,6 +18,12 @@ export class Unit {
         this.lastAttacker = null;
         this.buffs = [];
         this.extraTurnCharges = 0;
+
+        this.summoner = config.summoner;
+        this.minionRoles = config.minionRoles;
+        this.minionConfigs = config.minionConfigs;
+        this.maxSummonedUnits = config.maxSummonedUnits;
+        this.summonedUnits = 0;
 
         let texture = config.textureKey ?? (config.type === 'player' ? 'player_unit' : 'enemy_unit');
 
@@ -50,7 +58,9 @@ export class Unit {
         this.marker.setPosition(x, y - 30);
         this.nameLabel.setPosition(x, y - 45);
         this.useAction(1);
-        this.scene.infoPanel.update(this);
+        if (this.scene.selectedUnit === this) {
+            this.scene.infoPanel.update(this);
+        }
     }
 
     setTile(tile) {
@@ -216,9 +226,13 @@ export class Unit {
         this.sprite.setAlpha(1);
     }
 
+    onKilled() {
+        if (this.summoner) this.summoner.summonedUnits -= 1;
+    }
+
     select() {
         this.marker.setVisible(true);
-        this.sprite.setTint(this.type === 'player' ? 0x44ff44 : 0xe3e300);
+        this.sprite.setTint(this.team === 'player' ? 0x44ff44 : 0xe3e300);
     }
 
     deselect() {
